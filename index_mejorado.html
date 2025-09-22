@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Control de Finanzas</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="app">
+        <!-- Header -->
+        <header class="header">
+            <h1 id="page-title">Control de Finanzas</h1>
+            <div id="greeting" class="greeting">Hola, Usuario</div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Dashboard Screen -->
+            <div id="dashboard" class="screen active">
+                <div class="metrics-grid">
+                    <div class="metric-card income-current">
+                        <div class="metric-label">Ingresos mes actual</div>
+                        <div class="metric-value">$4.575.000</div>
+                    </div>
+                    <div class="metric-card income-previous">
+                        <div class="metric-label">Ingresos mes anterior</div>
+                        <div class="metric-value">$3.820.000</div>
+                    </div>
+                    <div class="metric-card pending">
+                        <div class="metric-label">Facturas pendientes</div>
+                        <div class="metric-value">12</div>
+                    </div>
+                    <div class="metric-card paid">
+                        <div class="metric-label">Facturas pagadas</div>
+                        <div class="metric-value">28</div>
+                    </div>
+                    <div class="metric-card overdue">
+                        <div class="metric-label">Facturas vencidas</div>
+                        <div class="metric-value">3</div>
+                    </div>
+                </div>
+
+                <div class="chart-container">
+                    <canvas id="incomeChart"></canvas>
+                </div>
+
+                <div class="quick-actions">
+                    <h3>Acceso Rápido</h3>
+                    <div class="quick-actions-grid">
+                        <button class="quick-action-btn" onclick="app.switchTab('clientes')">
+                            <span class="icon">👥</span>
+                            Ver Clientes
+                        </button>
+                        <button class="quick-action-btn" onclick="app.showModal('newInvoiceModal')">
+                            <span class="icon">📄</span>
+                            Nueva Factura
+                        </button>
+                        <button class="quick-action-btn" onclick="app.switchTab('servicios')">
+                            <span class="icon">⚙️</span>
+                            Servicios
+                        </button>
+                        <button class="quick-action-btn" onclick="app.switchTab('reportes')">
+                            <span class="icon">📊</span>
+                            Reportes
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Clients Screen -->
+            <div id="clientes" class="screen">
+                <div class="screen-header">
+                    <h2>Mis Clientes</h2>
+                    <div class="client-count">Total: <span id="client-count">0</span> clientes</div>
+                </div>
+
+                <div class="search-container">
+                    <input type="text" id="client-search" placeholder="Buscar cliente..." class="search-input">
+                </div>
+
+                <div id="client-list" class="client-list">
+                    <!-- Clients will be rendered here -->
+                </div>
+
+                <button class="fab" onclick="app.showModal('newClientModal')">+</button>
+            </div>
+
+            <!-- Invoices Screen -->
+            <div id="facturas" class="screen">
+                <div class="screen-header">
+                    <h2>Gestión de Facturas</h2>
+                </div>
+
+                <div class="filter-tabs">
+                    <button class="filter-tab active" data-filter="todas" onclick="app.filterInvoices('todas')">
+                        Todas <span class="badge" id="all-count">0</span>
+                    </button>
+                    <button class="filter-tab" data-filter="Pagada" onclick="app.filterInvoices('Pagada')">
+                        Pagadas <span class="badge success" id="paid-count">0</span>
+                    </button>
+                    <button class="filter-tab" data-filter="Pendiente" onclick="app.filterInvoices('Pendiente')">
+                        Pendientes <span class="badge warning" id="pending-count">0</span>
+                    </button>
+                    <button class="filter-tab" data-filter="Vencida" onclick="app.filterInvoices('Vencida')">
+                        Vencidas <span class="badge error" id="overdue-count">0</span>
+                    </button>
+                </div>
+
+                <div id="invoice-list" class="invoice-list">
+                    <!-- Invoices will be rendered here -->
+                </div>
+
+                <button class="fab" onclick="app.showModal('newInvoiceModal')">+</button>
+            </div>
+
+            <!-- Services Screen -->
+            <div id="servicios" class="screen">
+                <div class="screen-header">
+                    <h2>Catálogo de Servicios</h2>
+                    <div class="service-count">Total: <span id="service-count">0</span> servicios activos</div>
+                </div>
+
+                <div id="service-list" class="service-list">
+                    <!-- Services will be rendered here -->
+                </div>
+
+                <button class="fab" onclick="app.showModal('newServiceModal')">+</button>
+            </div>
+
+            <!-- Reports Screen -->
+            <div id="reportes" class="screen">
+                <div class="screen-header">
+                    <h2>Reportes y Análisis</h2>
+                </div>
+
+                <!-- Export Section -->
+                <div class="export-section">
+                    <h3>Exportar Informes</h3>
+                    <div class="export-buttons">
+                        <button class="btn-primary export-btn" onclick="app.exportToExcel()">
+                            📊 Exportar para Contador (CSV)
+                        </button>
+                        <button class="btn-secondary export-btn" onclick="app.exportData()">
+                            💾 Backup Completo (JSON)
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Monthly Sales Chart -->
+                <div class="report-section">
+                    <h3>Evolución de Ventas Mensuales</h3>
+                    <div class="chart-container">
+                        <canvas id="monthlyChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Monthly Sales Table -->
+                <div class="report-section">
+                    <h3>Detalle Mensual</h3>
+                    <div class="table-container">
+                        <table class="report-table">
+                            <thead>
+                                <tr>
+                                    <th>Mes</th>
+                                    <th>Ingresos</th>
+                                    <th>Facturas</th>
+                                    <th>Clientes</th>
+                                    <th>Promedio/Factura</th>
+                                </tr>
+                            </thead>
+                            <tbody id="monthly-sales-table">
+                                <!-- Monthly data will be rendered here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Top Services -->
+                <div class="report-section">
+                    <h3>Servicios Más Rentables</h3>
+                    <div id="top-services" class="top-items-container">
+                        <!-- Top services will be rendered here -->
+                    </div>
+                </div>
+
+                <!-- Client Analysis -->
+                <div class="report-section">
+                    <h3>Mejores Clientes</h3>
+                    <div id="client-analysis" class="top-items-container">
+                        <!-- Client analysis will be rendered here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Config Screen -->
+            <div id="config" class="screen">
+                <div class="screen-header">
+                    <h2>Configuración</h2>
+                </div>
+
+                <div class="config-sections">
+                    <div class="config-section">
+                        <h3>Perfil de la Empresa</h3>
+                        <div class="config-item">
+                            <label>Nombre de la empresa</label>
+                            <input type="text" value="Mi Empresa SRL" readonly>
+                        </div>
+                        <div class="config-item">
+                            <label>CUIT</label>
+                            <input type="text" value="20-12345678-9" readonly>
+                        </div>
+                        <div class="config-item">
+                            <label>Dirección</label>
+                            <input type="text" value="Av. Corrientes 1234, CABA" readonly>
+                        </div>
+                        <div class="config-item">
+                            <label>Email</label>
+                            <input type="email" value="contacto@miempresa.com" readonly>
+                        </div>
+                    </div>
+
+                    <div class="config-section">
+                        <h3>Configuración de Facturación</h3>
+                        <div class="config-item">
+                            <label>Moneda</label>
+                            <select>
+                                <option value="ARS" selected>Peso Argentino ($)</option>
+                                <option value="USD">Dólar Estadounidense (US$)</option>
+                            </select>
+                        </div>
+                        <div class="config-item">
+                            <label>IVA por defecto</label>
+                            <select>
+                                <option value="21" selected>21%</option>
+                                <option value="10.5">10,5%</option>
+                                <option value="0">0% (Exento)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="config-section">
+                        <h3>Datos y Backup</h3>
+                        <button class="config-btn" onclick="app.exportData()">Exportar Datos</button>
+                        <button class="config-btn" onclick="app.exportToExcel()">Informe para Contador</button>
+                        <button class="config-btn warning" onclick="app.clearData()">Limpiar Datos</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Bottom Navigation -->
+        <nav class="bottom-nav">
+            <button class="nav-item active" data-tab="dashboard" onclick="app.switchTab('dashboard')">
+                <span class="nav-icon">📊</span>
+                <span class="nav-label">Dashboard</span>
+            </button>
+            <button class="nav-item" data-tab="clientes" onclick="app.switchTab('clientes')">
+                <span class="nav-icon">👥</span>
+                <span class="nav-label">Clientes</span>
+            </button>
+            <button class="nav-item" data-tab="facturas" onclick="app.switchTab('facturas')">
+                <span class="nav-icon">📄</span>
+                <span class="nav-label">Facturas</span>
+            </button>
+            <button class="nav-item" data-tab="servicios" onclick="app.switchTab('servicios')">
+                <span class="nav-icon">⚙️</span>
+                <span class="nav-label">Servicios</span>
+            </button>
+            <button class="nav-item" data-tab="reportes" onclick="app.switchTab('reportes')">
+                <span class="nav-icon">📈</span>
+                <span class="nav-label">Reportes</span>
+            </button>
+            <button class="nav-item" data-tab="config" onclick="app.switchTab('config')">
+                <span class="nav-icon">⚙️</span>
+                <span class="nav-label">Config</span>
+            </button>
+        </nav>
+
+        <!-- Modals -->
+        <!-- New Client Modal -->
+        <div id="newClientModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Nuevo Cliente</h3>
+                    <button class="modal-close" onclick="app.hideModal('newClientModal')">&times;</button>
+                </div>
+                <form id="newClientForm" class="modal-form">
+                    <div class="form-group">
+                        <label>Nombre</label>
+                        <input type="text" name="nombre" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Teléfono</label>
+                        <input type="tel" name="telefono" placeholder="+54 11 1234-5678" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" name="email" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Dirección</label>
+                        <textarea name="direccion" rows="2" placeholder="Dirección completa"></textarea>
+                    </div>
+                    <div class="modal-actions">
+                        <button type="button" class="btn-secondary" onclick="app.hideModal('newClientModal')">Cancelar</button>
+                        <button type="submit" class="btn-primary">Guardar Cliente</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Edit Client Modal -->
+        <div id="editClientModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Editar Cliente</h3>
+                    <button class="modal-close" onclick="app.hideModal('editClientModal')">&times;</button>
+                </div>
+                <form id="editClientForm" class="modal-form">
+                    <div class="form-group">
+                        <label>Nombre</label>
+                        <input type="text" name="nombre" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Teléfono</label>
+                        <input type="tel" name="telefono" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" name="email" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Dirección</label>
+                        <textarea name="direccion" rows="2"></textarea>
+                    </div>
+                    <div class="modal-actions">
+                        <button type="button" class="btn-secondary" onclick="app.hideModal('editClientModal')">Cancelar</button>
+                        <button type="submit" class="btn-primary">Actualizar Cliente</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- New Invoice Modal -->
+        <div id="newInvoiceModal" class="modal">
+            <div class="modal-content large">
+                <div class="modal-header">
+                    <h3>Nueva Factura</h3>
+                    <button class="modal-close" onclick="app.hideModal('newInvoiceModal')">&times;</button>
+                </div>
+                <form id="newInvoiceForm" class="modal-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Cliente</label>
+                            <select name="cliente" required>
+                                <option value="">Seleccionar cliente</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Fecha de Emisión</label>
+                            <input type="date" name="fecha" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Fecha de Vencimiento</label>
+                            <input type="date" name="vencimiento" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Estado</label>
+                            <select name="estado">
+                                <option value="Pendiente" selected>Pendiente</option>
+                                <option value="Pagada">Pagada</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <h4>Servicios</h4>
+                    <div id="invoice-services" class="invoice-services">
+                        <div class="service-row">
+                            <select name="servicios[0][nombre]" class="service-select">
+                                <option value="">Seleccionar servicio</option>
+                            </select>
+                            <input type="number" name="servicios[0][cantidad]" placeholder="Cantidad" min="1" value="1">
+                            <input type="number" name="servicios[0][precio]" placeholder="Precio" step="0.01" min="0">
+                            <button type="button" class="btn-remove" onclick="app.removeServiceRow(this)">-</button>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-add" onclick="app.addServiceRow()">+ Agregar Servicio</button>
+
+                    <div class="form-group">
+                        <label>Notas</label>
+                        <textarea name="notas" rows="3" placeholder="Notas adicionales..."></textarea>
+                    </div>
+
+                    <div class="invoice-total">
+                        <div class="total-row">
+                            <span>Subtotal:</span>
+                            <span id="invoice-subtotal">$0</span>
+                        </div>
+                        <div class="total-row">
+                            <span>IVA (21%):</span>
+                            <span id="invoice-tax">$0</span>
+                        </div>
+                        <div class="total-row total">
+                            <span>Total:</span>
+                            <span id="invoice-total">$0</span>
+                        </div>
+                    </div>
+
+                    <div class="modal-actions">
+                        <button type="button" class="btn-secondary" onclick="app.hideModal('newInvoiceModal')">Cancelar</button>
+                        <button type="submit" class="btn-primary">Crear Factura</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Edit Invoice Modal -->
+        <div id="editInvoiceModal" class="modal">
+            <div class="modal-content large">
+                <div class="modal-header">
+                    <h3>Editar Factura</h3>
+                    <button class="modal-close" onclick="app.hideModal('editInvoiceModal')">&times;</button>
+                </div>
+                <form id="editInvoiceForm" class="modal-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Cliente</label>
+                            <select name="cliente" required>
+                                <option value="">Seleccionar cliente</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Fecha de Emisión</label>
+                            <input type="date" name="fecha" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Fecha de Vencimiento</label>
+                            <input type="date" name="vencimiento" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Estado</label>
+                            <select name="estado">
+                                <option value="Pendiente">Pendiente</option>
+                                <option value="Pagada">Pagada</option>
+                                <option value="Vencida">Vencida</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <h4>Servicios</h4>
+                    <div id="edit-invoice-services" class="invoice-services">
+                        <!-- Services will be populated here -->
+                    </div>
+                    <button type="button" class="btn-add" onclick="app.addServiceRowToEditForm()">+ Agregar Servicio</button>
+
+                    <div class="form-group">
+                        <label>Notas</label>
+                        <textarea name="notas" rows="3" placeholder="Notas adicionales..."></textarea>
+                    </div>
+
+                    <div class="invoice-total">
+                        <div class="total-row">
+                            <span>Subtotal:</span>
+                            <span id="edit-invoice-subtotal">$0</span>
+                        </div>
+                        <div class="total-row">
+                            <span>IVA (21%):</span>
+                            <span id="edit-invoice-tax">$0</span>
+                        </div>
+                        <div class="total-row total">
+                            <span>Total:</span>
+                            <span id="edit-invoice-total">$0</span>
+                        </div>
+                    </div>
+
+                    <div class="modal-actions">
+                        <button type="button" class="btn-secondary" onclick="app.hideModal('editInvoiceModal')">Cancelar</button>
+                        <button type="submit" class="btn-primary">Actualizar Factura</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- New Service Modal -->
+        <div id="newServiceModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Nuevo Servicio</h3>
+                    <button class="modal-close" onclick="app.hideModal('newServiceModal')">&times;</button>
+                </div>
+                <form id="newServiceForm" class="modal-form">
+                    <div class="form-group">
+                        <label>Nombre del servicio</label>
+                        <input type="text" name="nombre" required>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Precio (ARS)</label>
+                            <input type="number" name="precio" step="0.01" min="0" required placeholder="0.00">
+                        </div>
+                        <div class="form-group">
+                            <label>Unidad</label>
+                            <select name="unidad">
+                                <option value="hora">Por hora</option>
+                                <option value="proyecto">Por proyecto</option>
+                                <option value="mes">Por mes</option>
+                                <option value="unidad">Por unidad</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Descripción</label>
+                        <textarea name="descripcion" rows="3" placeholder="Describe el servicio..."></textarea>
+                    </div>
+                    <div class="modal-actions">
+                        <button type="button" class="btn-secondary" onclick="app.hideModal('newServiceModal')">Cancelar</button>
+                        <button type="submit" class="btn-primary">Guardar Servicio</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Edit Service Modal -->
+        <div id="editServiceModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Editar Servicio</h3>
+                    <button class="modal-close" onclick="app.hideModal('editServiceModal')">&times;</button>
+                </div>
+                <form id="editServiceForm" class="modal-form">
+                    <div class="form-group">
+                        <label>Nombre del servicio</label>
+                        <input type="text" name="nombre" required>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Precio (ARS)</label>
+                            <input type="number" name="precio" step="0.01" min="0" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Unidad</label>
+                            <select name="unidad">
+                                <option value="hora">Por hora</option>
+                                <option value="proyecto">Por proyecto</option>
+                                <option value="mes">Por mes</option>
+                                <option value="unidad">Por unidad</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Descripción</label>
+                        <textarea name="descripcion" rows="3"></textarea>
+                    </div>
+                    <div class="modal-actions">
+                        <button type="button" class="btn-secondary" onclick="app.hideModal('editServiceModal')">Cancelar</button>
+                        <button type="submit" class="btn-primary">Actualizar Servicio</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Client Profile Modal -->
+        <div id="clientProfileModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 id="client-profile-name">Perfil del Cliente</h3>
+                    <button class="modal-close" onclick="app.hideModal('clientProfileModal')">&times;</button>
+                </div>
+                <div class="client-profile-content">
+                    <div class="client-info">
+                        <div class="info-row">
+                            <strong>Teléfono:</strong>
+                            <span id="client-profile-phone"></span>
+                        </div>
+                        <div class="info-row">
+                            <strong>Email:</strong>
+                            <span id="client-profile-email"></span>
+                        </div>
+                        <div class="info-row">
+                            <strong>Dirección:</strong>
+                            <span id="client-profile-address"></span>
+                        </div>
+                        <div class="info-row">
+                            <strong>Total Facturado:</strong>
+                            <span id="client-profile-total" class="amount"></span>
+                        </div>
+                        <div class="info-row">
+                            <strong>Facturas:</strong>
+                            <span id="client-profile-invoices"></span>
+                        </div>
+                    </div>
+                    <div class="client-actions">
+                        <button class="btn-secondary" onclick="app.editClient()">Editar Cliente</button>
+                        <button class="btn-danger" onclick="app.deleteClient()">Eliminar Cliente</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Invoice Detail Modal -->
+        <div id="invoiceDetailModal" class="modal">
+            <div class="modal-content large">
+                <div class="modal-header">
+                    <h3 id="invoice-detail-title">Detalle de Factura</h3>
+                    <button class="modal-close" onclick="app.hideModal('invoiceDetailModal')">&times;</button>
+                </div>
+                <div class="invoice-detail-content">
+                    <div class="invoice-header">
+                        <div class="invoice-info">
+                            <div class="info-row">
+                                <strong>Número:</strong>
+                                <span id="invoice-detail-number"></span>
+                            </div>
+                            <div class="info-row">
+                                <strong>Cliente:</strong>
+                                <span id="invoice-detail-client"></span>
+                            </div>
+                            <div class="info-row">
+                                <strong>Fecha:</strong>
+                                <span id="invoice-detail-date"></span>
+                            </div>
+                            <div class="info-row">
+                                <strong>Vencimiento:</strong>
+                                <span id="invoice-detail-due"></span>
+                            </div>
+                            <div class="info-row">
+                                <strong>Estado:</strong>
+                                <span id="invoice-detail-status" class="status-badge"></span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="invoice-services-detail">
+                        <h4>Servicios</h4>
+                        <div id="invoice-detail-services"></div>
+                    </div>
+
+                    <div class="invoice-totals">
+                        <div class="total-row">
+                            <span>Subtotal:</span>
+                            <span id="invoice-detail-subtotal"></span>
+                        </div>
+                        <div class="total-row">
+                            <span>IVA (21%):</span>
+                            <span id="invoice-detail-tax"></span>
+                        </div>
+                        <div class="total-row total">
+                            <span>Total:</span>
+                            <span id="invoice-detail-total"></span>
+                        </div>
+                    </div>
+
+                    <div class="invoice-notes" id="invoice-detail-notes-section">
+                        <h4>Notas</h4>
+                        <p id="invoice-detail-notes"></p>
+                    </div>
+
+                    <div class="invoice-actions">
+                        <button class="btn-success" onclick="app.markAsPaid()" id="mark-paid-btn">Marcar como Pagada</button>
+                        <button class="btn-primary" onclick="app.shareInvoice()">Compartir PDF</button>
+                        <button class="btn-secondary" onclick="app.editInvoice()">Editar</button>
+                        <button class="btn-danger" onclick="app.deleteInvoice()">Eliminar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Service Detail Modal -->
+        <div id="serviceDetailModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 id="service-detail-name">Detalle del Servicio</h3>
+                    <button class="modal-close" onclick="app.hideModal('serviceDetailModal')">&times;</button>
+                </div>
+                <div class="service-detail-content">
+                    <div class="service-info">
+                        <div class="info-row">
+                            <strong>Precio:</strong>
+                            <span id="service-detail-price" class="amount"></span>
+                        </div>
+                        <div class="info-row">
+                            <strong>Unidad:</strong>
+                            <span id="service-detail-unit"></span>
+                        </div>
+                        <div class="info-row">
+                            <strong>Descripción:</strong>
+                            <span id="service-detail-description"></span>
+                        </div>
+                    </div>
+                    
+                    <div class="service-stats">
+                        <h4>Estadísticas</h4>
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                <div class="stat-value" id="service-detail-sold"></div>
+                                <div class="stat-label">Veces vendido</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value" id="service-detail-revenue"></div>
+                                <div class="stat-label">Ingresos generados</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="service-actions">
+                        <button class="btn-secondary" onclick="app.editService()">Editar Servicio</button>
+                        <button class="btn-danger" onclick="app.deleteService()">Eliminar Servicio</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app_mejorado.js"></script>
+</body>
+</html>
